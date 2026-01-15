@@ -256,19 +256,31 @@ async def button_callback(update: Update, context: CallbackContext) -> None:
         return
     action, unique_key = data.split('_', 1)
     if unique_key not in news_storage:
-        await query.edit_message_text("Новость не найдена")
+        try:
+            await query.edit_message_text("Новость не найдена")
+        except:
+            await query.edit_message_caption(caption="Новость не найдена")
         return
     news = news_storage[unique_key]
+    has_photo = news.get('photo') is not None
     if action == 'publish':
         await publish_news(context, news, unique_key)
-        await query.edit_message_text(f"ОПУБЛИКОВАНО\n\nЗаголовок: {news['title']}\nАвтор: {news['username']}")
+        result_text = f"ОПУБЛИКОВАНО\n\nЗаголовок: {news['title']}\nАвтор: {news['username']}"
+        if has_photo:
+            await query.edit_message_caption(caption=result_text)
+        else:
+            await query.edit_message_text(result_text)
         del news_storage[unique_key]
     elif action == 'reject':
         try:
             await context.bot.send_message(chat_id=news['user_id'], text=f"Ваша новость отклонена.\n\n{news['title']}")
         except:
             pass
-        await query.edit_message_text(f"ОТКЛОНЕНО\n\nЗаголовок: {news['title']}\nАвтор: {news['username']}")
+        result_text = f"ОТКЛОНЕНО\n\nЗаголовок: {news['title']}\nАвтор: {news['username']}"
+        if has_photo:
+            await query.edit_message_caption(caption=result_text)
+        else:
+            await query.edit_message_text(result_text)
         del news_storage[unique_key]
     elif action == 'spam':
         blocked_users.add(news['user_id'])
@@ -277,18 +289,30 @@ async def button_callback(update: Update, context: CallbackContext) -> None:
             await context.bot.send_message(chat_id=news['user_id'], text="Вы заблокированы за спам.")
         except:
             pass
-        await query.edit_message_text(f"СПАМ - ЗАБЛОКИРОВАН\n\nЗаголовок: {news['title']}\nАвтор: {news['username']} (ID: {news['user_id']})")
+        result_text = f"СПАМ - ЗАБЛОКИРОВАН\n\nЗаголовок: {news['title']}\nАвтор: {news['username']} (ID: {news['user_id']})"
+        if has_photo:
+            await query.edit_message_caption(caption=result_text)
+        else:
+            await query.edit_message_text(result_text)
         del news_storage[unique_key]
     elif action == 'delay1':
         publish_time = datetime.now() + timedelta(hours=1)
         scheduled_posts[unique_key] = {'news': news, 'time': publish_time}
-        await query.edit_message_text(f"ОТЛОЖЕНО на 1 час\n\nЗаголовок: {news['title']}\nПубликация: {publish_time.strftime('%H:%M')}")
+        result_text = f"ОТЛОЖЕНО на 1 час\n\nЗаголовок: {news['title']}\nПубликация: {publish_time.strftime('%H:%M')}"
+        if has_photo:
+            await query.edit_message_caption(caption=result_text)
+        else:
+            await query.edit_message_text(result_text)
         del news_storage[unique_key]
         asyncio.create_task(delayed_publish(context, unique_key, 3600))
     elif action == 'delay3':
         publish_time = datetime.now() + timedelta(hours=3)
         scheduled_posts[unique_key] = {'news': news, 'time': publish_time}
-        await query.edit_message_text(f"ОТЛОЖЕНО на 3 часа\n\nЗаголовок: {news['title']}\nПубликация: {publish_time.strftime('%H:%M')}")
+        result_text = f"ОТЛОЖЕНО на 3 часа\n\nЗаголовок: {news['title']}\nПубликация: {publish_time.strftime('%H:%M')}"
+        if has_photo:
+            await query.edit_message_caption(caption=result_text)
+        else:
+            await query.edit_message_text(result_text)
         del news_storage[unique_key]
         asyncio.create_task(delayed_publish(context, unique_key, 10800))
     elif action == 'delaycustom':
