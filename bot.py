@@ -316,8 +316,68 @@ async def button_callback(update: Update, context: CallbackContext) -> None:
         del news_storage[unique_key]
         asyncio.create_task(delayed_publish(context, unique_key, 10800))
     elif action == 'delaycustom':
-        delay_mode[query.from_user.id] = unique_key
-        await query.message.reply_text("Введите время публикации в формате ЧЧ:ММ (например 14:30):")
+        keyboard = [
+            [
+                InlineKeyboardButton("30мин", callback_data=f'delaymin30_{unique_key}'),
+                InlineKeyboardButton("2ч", callback_data=f'delayhrs2_{unique_key}'),
+                InlineKeyboardButton("6ч", callback_data=f'delayhrs6_{unique_key}')
+            ],
+            [
+                InlineKeyboardButton("12ч", callback_data=f'delayhrs12_{unique_key}'),
+                InlineKeyboardButton("24ч", callback_data=f'delayhrs24_{unique_key}')
+            ]
+        ]
+        await query.message.reply_text("Выберите время отложки:", reply_markup=InlineKeyboardMarkup(keyboard))
+    elif action == 'delaymin30':
+        publish_time = datetime.now() + timedelta(minutes=30)
+        scheduled_posts[unique_key] = {'news': news, 'time': publish_time}
+        result_text = f"ОТЛОЖЕНО на 30 мин\n\nЗаголовок: {news['title']}\nПубликация: {publish_time.strftime('%H:%M')}"
+        if has_photo:
+            await query.edit_message_caption(caption=result_text)
+        else:
+            await query.edit_message_text(result_text)
+        del news_storage[unique_key]
+        asyncio.create_task(delayed_publish(context, unique_key, 1800))
+    elif action == 'delayhrs2':
+        publish_time = datetime.now() + timedelta(hours=2)
+        scheduled_posts[unique_key] = {'news': news, 'time': publish_time}
+        result_text = f"ОТЛОЖЕНО на 2 часа\n\nЗаголовок: {news['title']}\nПубликация: {publish_time.strftime('%H:%M')}"
+        if has_photo:
+            await query.edit_message_caption(caption=result_text)
+        else:
+            await query.edit_message_text(result_text)
+        del news_storage[unique_key]
+        asyncio.create_task(delayed_publish(context, unique_key, 7200))
+    elif action == 'delayhrs6':
+        publish_time = datetime.now() + timedelta(hours=6)
+        scheduled_posts[unique_key] = {'news': news, 'time': publish_time}
+        result_text = f"ОТЛОЖЕНО на 6 часов\n\nЗаголовок: {news['title']}\nПубликация: {publish_time.strftime('%H:%M')}"
+        if has_photo:
+            await query.edit_message_caption(caption=result_text)
+        else:
+            await query.edit_message_text(result_text)
+        del news_storage[unique_key]
+        asyncio.create_task(delayed_publish(context, unique_key, 21600))
+    elif action == 'delayhrs12':
+        publish_time = datetime.now() + timedelta(hours=12)
+        scheduled_posts[unique_key] = {'news': news, 'time': publish_time}
+        result_text = f"ОТЛОЖЕНО на 12 часов\n\nЗаголовок: {news['title']}\nПубликация: {publish_time.strftime('%H:%M')}"
+        if has_photo:
+            await query.edit_message_caption(caption=result_text)
+        else:
+            await query.edit_message_text(result_text)
+        del news_storage[unique_key]
+        asyncio.create_task(delayed_publish(context, unique_key, 43200))
+    elif action == 'delayhrs24':
+        publish_time = datetime.now() + timedelta(hours=24)
+        scheduled_posts[unique_key] = {'news': news, 'time': publish_time}
+        result_text = f"ОТЛОЖЕНО на 24 часа\n\nЗаголовок: {news['title']}\nПубликация: {publish_time.strftime('%H:%M')}"
+        if has_photo:
+            await query.edit_message_caption(caption=result_text)
+        else:
+            await query.edit_message_text(result_text)
+        del news_storage[unique_key]
+        asyncio.create_task(delayed_publish(context, unique_key, 86400))
 
 
 async def publish_news(context: CallbackContext, news: dict, unique_key: str) -> None:
@@ -342,7 +402,10 @@ async def delayed_publish(context: CallbackContext, unique_key: str, delay: int)
 
 async def handle_admin_input(update: Update, context: CallbackContext) -> None:
     user_id = update.effective_user.id
+    if user_id not in ADMIN_USER_IDS:
+        return
     text = update.message.text.strip()
+    logger.info(f"Admin input: {text} from {user_id}, delay_mode={delay_mode}, edit_mode={edit_mode}")
     if user_id in delay_mode:
         unique_key = delay_mode[user_id]
         if unique_key in news_storage:
@@ -476,7 +539,7 @@ def main() -> None:
     application.add_handler(CommandHandler("stats", admin_stats))
     application.add_handler(CommandHandler("adminhelp", admin_help))
     application.add_handler(CommandHandler("scheduled", admin_scheduled))
-    application.add_handler(CallbackQueryHandler(button_callback, pattern='^(publish|reject|spam|edit|delay1|delay3|delaycustom)_'))
+    application.add_handler(CallbackQueryHandler(button_callback, pattern='^(publish|reject|spam|edit|delay1|delay3|delaycustom|delaymin30|delayhrs2|delayhrs6|delayhrs12|delayhrs24)_'))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_admin_input))
     logger.info("Бот запускается...")
     application.run_polling(drop_pending_updates=True)
