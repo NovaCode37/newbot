@@ -35,6 +35,7 @@ flood_detection = {}
 scheduled_posts = {}
 edit_mode = {}
 delay_mode = {}
+scheduled_tasks = {}
 
 BLACKLISTED_PATTERNS = [re.compile(pattern, re.IGNORECASE) for pattern in BLACKLISTED_WORDS if pattern]
 
@@ -304,7 +305,8 @@ async def button_callback(update: Update, context: CallbackContext) -> None:
         else:
             await query.edit_message_text(result_text)
         del news_storage[unique_key]
-        asyncio.create_task(delayed_publish(context, unique_key, 3600))
+        task = asyncio.create_task(delayed_publish(context, unique_key, 3600))
+        scheduled_tasks[unique_key] = task
     elif action == 'delay3':
         publish_time = datetime.now() + timedelta(hours=3)
         scheduled_posts[unique_key] = {'news': news, 'time': publish_time}
@@ -314,7 +316,8 @@ async def button_callback(update: Update, context: CallbackContext) -> None:
         else:
             await query.edit_message_text(result_text)
         del news_storage[unique_key]
-        asyncio.create_task(delayed_publish(context, unique_key, 10800))
+        task = asyncio.create_task(delayed_publish(context, unique_key, 10800))
+        scheduled_tasks[unique_key] = task
     elif action == 'delaycustom':
         keyboard = [
             [
@@ -337,7 +340,8 @@ async def button_callback(update: Update, context: CallbackContext) -> None:
         else:
             await query.edit_message_text(result_text)
         del news_storage[unique_key]
-        asyncio.create_task(delayed_publish(context, unique_key, 1800))
+        task = asyncio.create_task(delayed_publish(context, unique_key, 1800))
+        scheduled_tasks[unique_key] = task
     elif action == 'delayhrs2':
         publish_time = datetime.now() + timedelta(hours=2)
         scheduled_posts[unique_key] = {'news': news, 'time': publish_time}
@@ -347,7 +351,8 @@ async def button_callback(update: Update, context: CallbackContext) -> None:
         else:
             await query.edit_message_text(result_text)
         del news_storage[unique_key]
-        asyncio.create_task(delayed_publish(context, unique_key, 7200))
+        task = asyncio.create_task(delayed_publish(context, unique_key, 7200))
+        scheduled_tasks[unique_key] = task
     elif action == 'delayhrs6':
         publish_time = datetime.now() + timedelta(hours=6)
         scheduled_posts[unique_key] = {'news': news, 'time': publish_time}
@@ -357,7 +362,8 @@ async def button_callback(update: Update, context: CallbackContext) -> None:
         else:
             await query.edit_message_text(result_text)
         del news_storage[unique_key]
-        asyncio.create_task(delayed_publish(context, unique_key, 21600))
+        task = asyncio.create_task(delayed_publish(context, unique_key, 21600))
+        scheduled_tasks[unique_key] = task
     elif action == 'delayhrs12':
         publish_time = datetime.now() + timedelta(hours=12)
         scheduled_posts[unique_key] = {'news': news, 'time': publish_time}
@@ -367,7 +373,8 @@ async def button_callback(update: Update, context: CallbackContext) -> None:
         else:
             await query.edit_message_text(result_text)
         del news_storage[unique_key]
-        asyncio.create_task(delayed_publish(context, unique_key, 43200))
+        task = asyncio.create_task(delayed_publish(context, unique_key, 43200))
+        scheduled_tasks[unique_key] = task
     elif action == 'delayhrs24':
         publish_time = datetime.now() + timedelta(hours=24)
         scheduled_posts[unique_key] = {'news': news, 'time': publish_time}
@@ -377,7 +384,8 @@ async def button_callback(update: Update, context: CallbackContext) -> None:
         else:
             await query.edit_message_text(result_text)
         del news_storage[unique_key]
-        asyncio.create_task(delayed_publish(context, unique_key, 86400))
+        task = asyncio.create_task(delayed_publish(context, unique_key, 86400))
+        scheduled_tasks[unique_key] = task
 
 
 async def publish_news(context: CallbackContext, news: dict, unique_key: str) -> None:
@@ -392,12 +400,21 @@ async def publish_news(context: CallbackContext, news: dict, unique_key: str) ->
 
 
 async def delayed_publish(context: CallbackContext, unique_key: str, delay: int) -> None:
-    await asyncio.sleep(delay)
-    if unique_key in scheduled_posts:
-        news = scheduled_posts[unique_key]['news']
-        await publish_news(context, news, unique_key)
-        del scheduled_posts[unique_key]
-        logger.info(f"Отложенная публикация: {unique_key}")
+    try:
+        logger.info(f"Запланирована публикация {unique_key} через {delay} сек")
+        await asyncio.sleep(delay)
+        if unique_key in scheduled_posts:
+            news = scheduled_posts[unique_key]['news']
+            logger.info(f"Публикую отложенную новость: {unique_key}")
+            await publish_news(context, news, unique_key)
+            del scheduled_posts[unique_key]
+            logger.info(f"Отложенная публикация завершена: {unique_key}")
+        else:
+            logger.warning(f"Новость {unique_key} не найдена в scheduled_posts")
+        if unique_key in scheduled_tasks:
+            del scheduled_tasks[unique_key]
+    except Exception as e:
+        logger.error(f"Ошибка отложенной публикации {unique_key}: {e}")
 
 
 async def handle_admin_input(update: Update, context: CallbackContext) -> None:
