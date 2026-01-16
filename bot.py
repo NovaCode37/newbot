@@ -253,7 +253,17 @@ async def button_callback(update: Update, context: CallbackContext) -> None:
         unique_key = data.split('_', 1)[1]
         if unique_key in news_storage:
             edit_mode[query.from_user.id] = unique_key
-            await query.message.reply_text(f"Отправьте новый текст для новости {unique_key}:")
+            news = news_storage[unique_key]
+            try:
+                await context.bot.send_message(
+                    chat_id=query.from_user.id,
+                    text=f"Редактирование новости:\n\n*Заголовок:* {news['title']}\n*Текст:* {news['text']}\n\nОтправьте новый текст:",
+                    parse_mode='Markdown'
+                )
+                await query.answer("Проверьте личные сообщения", show_alert=True)
+            except Exception as e:
+                logger.error(f"Не удалось отправить личное сообщение: {e}")
+                await query.answer("Сначала напишите боту /start в личку", show_alert=True)
         return
     action, unique_key = data.split('_', 1)
     if unique_key not in news_storage:
