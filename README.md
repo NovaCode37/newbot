@@ -1,4 +1,4 @@
-# newbot — Advanced Telegram News Submission Bot
+# newbot: Telegram news submission bot
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![python-telegram-bot](https://img.shields.io/badge/python--telegram--bot-20.x-blue)
@@ -34,11 +34,11 @@ Each submission arrives in the moderation group with a full inline keyboard:
 [ 1ч ]  [ 3ч ]  [ Свое время ]
 ```
 
-- **Publish** — posts immediately to the channel, notifies author
-- **Reject** — notifies author with rejection message
-- **Edit** — moderator edits the post inline before publishing
-- **SPAM** — marks as spam, blocks the submitting user
-- **Delay** — schedules publication at 1h / 3h / custom time
+- **Publish:** posts immediately to the channel and notifies the author
+- **Reject:** notifies the author with a rejection message
+- **Edit:** moderator edits the post inline before publishing
+- **SPAM:** marks the post as spam and blocks the submitting user
+- **Delay:** schedules publication at 1h, 3h or a custom time
 
 ## Security Architecture
 
@@ -59,12 +59,12 @@ Incoming user message
 
 ## Features
 
-- **3-step submission flow** — title → body text → optional photo
-- **Photo support** — attach image to news post, or skip
-- **Configurable limits** — all thresholds via `.env`, no hardcoding
-- **Structured logging** — `bot.log` file + console, with timestamps and levels
-- **Admin whitelist** — `ADMIN_USER_IDS` set from environment
-- **Stale submission guard** — processed submissions removed from memory, replay-safe
+- **3-step submission flow:** title, body text, optional photo
+- **Photo support:** attach an image to the news post, or skip
+- **Configurable limits:** all thresholds via `.env`, no hardcoding
+- **Structured logging:** `bot.log` file and console, with timestamps and levels
+- **Admin whitelist:** `ADMIN_USER_IDS` set from environment
+- **Stale submission guard:** processed submissions are removed from memory, replay-safe
 
 ## Tech Stack
 
